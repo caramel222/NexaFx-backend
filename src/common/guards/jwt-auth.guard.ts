@@ -50,7 +50,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   }
 
   getRequest(context: ExecutionContext) {
-    if ((context.getType() as string) === 'graphql') {
+    if (context.getType<string>() === 'graphql') {
       return GqlExecutionContext.create(context).getContext<{
         req: Express.Request;
       }>().req;

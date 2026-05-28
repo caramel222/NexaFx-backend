@@ -24,7 +24,7 @@ import { depthLimitRule } from './rules/depth-limit.rule';
           typePaths: [join(__dirname, 'schemas/**/*.graphql')],
           playground: !isProduction,
           introspection: !isProduction,
-          validationRules: [depthLimitRule(5)],
+          validationRules: [depthLimitRule(5) as any],
           context: ({ req }: { req: Express.Request }) => ({ req }),
         };
       },

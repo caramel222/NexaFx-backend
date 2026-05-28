@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { AuditLogExportJob, ExportJobStatus, ExportFormat } from './entities/audit-log-export-job.entity';
+import {
+  AuditLogExportJob,
+  ExportJobStatus,
+  ExportFormat,
+} from '../entities/audit-log-export-job.entity';
 
 @Injectable()
 export class AuditLogExportJobRepository extends Repository<AuditLogExportJob> {

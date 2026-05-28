@@ -34,7 +34,9 @@ export class WalletsController {
 
   @Post('generate')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Generate a new Stellar wallet for the current user' })
+  @ApiOperation({
+    summary: 'Generate a new Stellar wallet for the current user',
+  })
   @ApiBody({ type: GenerateWalletDto, required: false })
   @ApiResponse({ status: 201, description: 'Wallet created' })
   async generate(
@@ -93,7 +95,10 @@ export class WalletsController {
   @HttpCode(HttpStatus.OK)
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOperation({ summary: 'Delete a non-default wallet' })
-  @ApiResponse({ status: 400, description: 'Cannot delete only or default wallet' })
+  @ApiResponse({
+    status: 400,
+    description: 'Cannot delete only or default wallet',
+  })
   async remove(
     @Request() req: { user: { userId: string } },
     @Param('id', ParseUUIDPipe) id: string,

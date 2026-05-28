@@ -17,8 +17,6 @@ export enum ProposalStatus {
 }
 
 @Entity('proposals')
-@Index(['status'])
-@Index(['proposerId'])
 @Index(['votingEndAt'])
 export class Proposal {
   @PrimaryGeneratedColumn('uuid')

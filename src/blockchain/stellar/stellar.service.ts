@@ -41,7 +41,7 @@ interface StellarError {
 
 function toStellarError(error: unknown): StellarError {
   if (error instanceof Error) {
-    return error as StellarError;
+    return error;
   }
   return { message: String(error) };
 }

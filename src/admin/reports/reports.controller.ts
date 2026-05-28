@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Query, Body, Param } from '@nestjs/common';
 import { ReportsService } from './reports.service';
+import { ReportType, ReportFrequency } from './report-schedule.entity';
 
 @Controller('admin/reports')
 export class ReportsController {
@@ -45,8 +46,8 @@ export class ReportsController {
     @Body('parameters') parameters: any,
   ) {
     return this.reportsService.createReportSchedule(
-      reportType,
-      frequency,
+      reportType as ReportType,
+      frequency as ReportFrequency,
       recipientEmail,
       parameters,
     );

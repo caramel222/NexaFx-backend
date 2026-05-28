@@ -18,7 +18,7 @@ export class MulterExceptionFilter implements ExceptionFilter {
       typeof maybeError === 'object' &&
       maybeError !== null &&
       'name' in maybeError &&
-      (maybeError as { name: unknown }).name === 'MulterError'
+      maybeError.name === 'MulterError'
     ) {
       const err = maybeError as MulterError;
       // Map Multer errors (like LIMIT_FILE_SIZE) to a 400 Bad Request

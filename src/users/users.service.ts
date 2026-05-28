@@ -344,7 +344,7 @@ export class UsersService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, walletSecretKeyEncrypted, twoFactorSecret, ...profile } =
       user;
-    return profile as ProfileResponseDto;
+    return profile;
   }
 
   async updateProfile(

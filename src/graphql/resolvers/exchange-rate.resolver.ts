@@ -10,10 +10,7 @@ export class ExchangeRateResolver {
   ) {}
 
   @Query('exchangeRate')
-  async exchangeRate(
-    @Args('from') from: string,
-    @Args('to') to: string,
-  ) {
+  async exchangeRate(@Args('from') from: string, @Args('to') to: string) {
     const result = await this.exchangeRatesService.getRate(from, to);
     return {
       from: result.from,

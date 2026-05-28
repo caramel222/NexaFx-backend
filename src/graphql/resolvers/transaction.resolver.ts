@@ -17,9 +17,7 @@ export class TransactionResolver {
     const resolvedLimit = limit ?? 20;
     const resolvedOffset = offset ?? 0;
     const page =
-      resolvedOffset > 0
-        ? Math.floor(resolvedOffset / resolvedLimit) + 1
-        : 1;
+      resolvedOffset > 0 ? Math.floor(resolvedOffset / resolvedLimit) + 1 : 1;
 
     return this.transactionsService.findAllByUser(user.userId, {
       limit: resolvedLimit,

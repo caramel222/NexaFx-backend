@@ -59,9 +59,7 @@ describe('TransactionResolver', () => {
 
   describe('transactions', () => {
     it('returns paginated transactions with default limit and offset', async () => {
-      transactionsService.findAllByUser.mockResolvedValue(
-        mockPaginatedResult as any,
-      );
+      transactionsService.findAllByUser.mockResolvedValue(mockPaginatedResult);
 
       const result = await resolver.transactions(mockUser);
 
@@ -73,9 +71,7 @@ describe('TransactionResolver', () => {
     });
 
     it('converts offset and limit to page correctly', async () => {
-      transactionsService.findAllByUser.mockResolvedValue(
-        mockPaginatedResult as any,
-      );
+      transactionsService.findAllByUser.mockResolvedValue(mockPaginatedResult);
 
       await resolver.transactions(mockUser, 10, 20);
 
@@ -86,9 +82,7 @@ describe('TransactionResolver', () => {
     });
 
     it('filters by status when provided', async () => {
-      transactionsService.findAllByUser.mockResolvedValue(
-        mockPaginatedResult as any,
-      );
+      transactionsService.findAllByUser.mockResolvedValue(mockPaginatedResult);
 
       await resolver.transactions(mockUser, 10, 0, 'SUCCESS');
 

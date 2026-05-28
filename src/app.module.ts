@@ -33,6 +33,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { WalletsModule } from './wallets/wallets.module';
 import { RateAlertsModule } from './rate-alerts/rate-alerts.module';
 import { LedgerModule } from './ledger/ledger.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -49,9 +50,6 @@ import { LedgerModule } from './ledger/ledger.module';
         synchronize:
           process.env.NODE_ENV !== 'production' &&
           process.env.NODE_ENV !== 'staging',
-        migrationsRun:
-          process.env.NODE_ENV === 'production' ||
-          process.env.NODE_ENV === 'staging',
         ssl:
           process.env.NODE_ENV === 'production'
             ? { rejectUnauthorized: false }
@@ -97,6 +95,7 @@ import { LedgerModule } from './ledger/ledger.module';
     WebhooksModule,
     WalletsModule,
     LedgerModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [

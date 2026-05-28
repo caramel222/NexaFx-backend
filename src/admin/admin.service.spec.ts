@@ -358,7 +358,7 @@ describe('AdminService', () => {
         ...mockTransaction,
         status: TransactionStatus.SUCCESS,
         failureReason: 'Manual verification completed',
-      } as Transaction);
+      });
 
       const result = await service.overrideTransactionStatus(
         'tx-override-test',
@@ -395,7 +395,7 @@ describe('AdminService', () => {
         ...mockTransaction,
         status: TransactionStatus.FAILED,
         failureReason: 'Blockchain confirmation timeout',
-      } as Transaction);
+      });
 
       const result = await service.overrideTransactionStatus(
         'tx-override-test',
@@ -419,7 +419,7 @@ describe('AdminService', () => {
         ...mockTransaction,
         status: TransactionStatus.CANCELLED,
         failureReason: 'User request after support ticket',
-      } as Transaction);
+      });
 
       const result = await service.overrideTransactionStatus(
         'tx-override-test',

@@ -73,7 +73,7 @@ describe('KycController', () => {
       documentNumber: 'ABC123',
       dateOfBirth: new Date().toISOString(),
       nationality: 'X',
-    } as SubmitKycDto;
+    };
 
     // call method providing properly typed multer file objects and a typed Request stub
     const reqForController = { kycUploadVersion: 'v1' } as unknown as Request;

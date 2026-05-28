@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
-import { AuditLogSchedule, ScheduleFrequency } from './entities/audit-log-schedule.entity';
+import {
+  AuditLogSchedule,
+  ScheduleFrequency,
+} from '../entities/audit-log-schedule.entity';
 
 @Injectable()
 export class AuditLogScheduleRepository extends Repository<AuditLogSchedule> {

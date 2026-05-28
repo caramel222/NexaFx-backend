@@ -37,8 +37,8 @@ export class LedgerVerificationService {
   ) {}
 
   async verify(): Promise<LedgerVerificationResult> {
-    const rows: Array<{ currency: string; amountDelta: string }> =
-      await this.ledgerEntryRepository.query(`
+    const rows: Array<{ currency: string; amountDelta: string }> = await this
+      .ledgerEntryRepository.query(`
         SELECT
           currency,
           COALESCE(SUM(CASE WHEN direction = 'CREDIT' THEN amount ELSE -amount END), 0)::text AS "amountDelta"
@@ -94,7 +94,9 @@ export class LedgerVerificationService {
     });
 
     if (admins.length === 0) {
-      this.logger.warn('Ledger discrepancy detected, but no admins were found to notify');
+      this.logger.warn(
+        'Ledger discrepancy detected, but no admins were found to notify',
+      );
       return;
     }
 

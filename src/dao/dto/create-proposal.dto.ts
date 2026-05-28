@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsDateString, IsNumber, Min, Max } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDateString,
+  IsNumber,
+  Min,
+  Max,
+} from 'class-validator';
 
 export class CreateProposalDto {
   @IsString()

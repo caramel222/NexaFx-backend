@@ -148,8 +148,7 @@ describe('SuperAdminService', () => {
   it('creates an ADMIN user and records a privileged audit log', async () => {
     jest.spyOn(usersService, 'findById').mockImplementation(async (userId) => {
       if (userId === superAdminUser.id) return superAdminUser;
-      if (userId === adminUser.id)
-        return { ...adminUser, isVerified: true } as User;
+      if (userId === adminUser.id) return { ...adminUser, isVerified: true };
       return null;
     });
     jest.spyOn(userRepository, 'findOne').mockResolvedValueOnce(null);
@@ -190,7 +189,7 @@ describe('SuperAdminService', () => {
     jest.spyOn(usersService, 'findById').mockImplementation(async (userId) => {
       if (userId === superAdminUser.id) return superAdminUser;
       if (userId === adminUser.id)
-        return { ...adminUser, role: UserRole.SUPER_ADMIN } as User;
+        return { ...adminUser, role: UserRole.SUPER_ADMIN };
       return null;
     });
     jest.spyOn(userRepository, 'count').mockResolvedValue(1);
@@ -227,23 +226,23 @@ describe('SuperAdminService', () => {
     jest.spyOn(platformConfigRepository, 'save').mockResolvedValue({
       ...maintenanceConfig,
       maintenanceMode: true,
-    } as PlatformConfig);
+    });
     jest.spyOn(currencyRepository, 'findOne').mockResolvedValue(usdCurrency);
     jest.spyOn(currencyRepository, 'save').mockResolvedValue({
       ...usdCurrency,
       isActive: false,
-    } as Currency);
+    });
     jest
       .spyOn(currencyRepository, 'find')
-      .mockResolvedValue([{ ...usdCurrency, isActive: false } as Currency]);
+      .mockResolvedValue([{ ...usdCurrency, isActive: false }]);
     jest.spyOn(feeConfigRepository, 'findOne').mockResolvedValue(feeConfig);
     jest.spyOn(feeConfigRepository, 'save').mockResolvedValue({
       ...feeConfig,
       feeValue: '2',
-    } as FeeConfig);
+    });
     jest
       .spyOn(feeConfigRepository, 'find')
-      .mockResolvedValue([{ ...feeConfig, feeValue: '2' } as FeeConfig]);
+      .mockResolvedValue([{ ...feeConfig, feeValue: '2' }]);
 
     const result = await service.updatePlatformConfig(superAdminUser.id, {
       maintenanceMode: true,

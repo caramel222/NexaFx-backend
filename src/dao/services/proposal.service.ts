@@ -66,7 +66,9 @@ export class ProposalService {
     voter: User,
     castVoteDto: CastVoteDto,
   ): Promise<Vote> {
-    const proposal = await this.proposalRepo.findOne({ where: { id: proposalId } });
+    const proposal = await this.proposalRepo.findOne({
+      where: { id: proposalId },
+    });
     if (!proposal) {
       throw new NotFoundException('Proposal not found');
     }
@@ -138,7 +140,8 @@ export class ProposalService {
     // Calculate percentages
     const yesPercent = totalWeight > 0 ? (yesWeight / totalWeight) * 100 : 0;
     const noPercent = totalWeight > 0 ? (noWeight / totalWeight) * 100 : 0;
-    const abstainPercent = totalWeight > 0 ? (abstainWeight / totalWeight) * 100 : 0;
+    const abstainPercent =
+      totalWeight > 0 ? (abstainWeight / totalWeight) * 100 : 0;
 
     // Check if quorum is reached
     // Quorum is calculated as a percentage of total eligible voters, but since we don't track total eligibility,
@@ -199,9 +202,7 @@ export class ProposalService {
   }
 
   async finalizeExpiredProposals(): Promise<void> {
-    this.logger.log(
-      'Starting finalization of expired ACTIVE proposals',
-    );
+    this.logger.log('Starting finalization of expired ACTIVE proposals');
 
     const now = new Date();
 

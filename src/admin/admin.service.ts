@@ -37,8 +37,11 @@ import { MetricsQueryDto } from './dto/metrics-query.dto';
 import * as csv from 'fast-csv';
 import { OverrideTransactionDto } from './dto/override-transaction.dto';
 import { Logger } from '@nestjs/common';
-import { DataRequest } from '../users/entities/data-request.entity';
-import { DataRequestType } from '../users/entities/data-request.entity';
+import {
+  DataRequest,
+  DataRequestType,
+  DataRequestStatus,
+} from '../users/entities/data-request.entity';
 import { UpdateUserPlanDto } from './dto/update-user-plan.dto';
 
 @Injectable()
@@ -578,40 +581,11 @@ export class AdminService {
     return user;
   }
 
-  async updateUserPlan(
-    id: string,
-    updateDto: UpdateUserPlanDto,
-    adminId: string,
-  ) {
-    const user = await this.getUserById(id);
-
-    // No restrictions on changing plan for any role? Allow.
-    if (user.plan === updateDto.plan) {
-      return user;
-    }
-
-    const oldPlan = user.plan;
-    user.plan = updateDto.plan;
-    await this.userRepository.save(user);
-
-    await this.auditLogsService.logAuthEvent(
-      adminId,
-      AuditAction.PLAN_CHANGE,
-      {
-        targetUserId: id,
-        oldPlan,
-        newPlan: user.plan,
-      },
-      true,
-    );
-
-    return user;
-  }
-
   async getUserRequests(id: string, type?: DataRequestType) {
     const user = await this.getUserById(id);
 
-    const query = this.dataRequestRepository.createQueryBuilder('dr')
+    const query = this.dataRequestRepository
+      .createQueryBuilder('dr')
       .where('dr."userId" = :userId', { userId: id })
       .orderBy('dr."requestedAt"', 'DESC');
 
@@ -674,9 +648,7 @@ export class AdminService {
     }
 
     if (request.status !== DataRequestStatus.PENDING) {
-      throw new BadRequestException(
-        'Only pending requests can be cancelled',
-      );
+      throw new BadRequestException('Only pending requests can be cancelled');
     }
 
     request.status = DataRequestStatus.FAILED;
@@ -697,7 +669,8 @@ export class AdminService {
   }
 
   async getAllRequests(type?: DataRequestType, status?: string) {
-    const query = this.dataRequestRepository.createQueryBuilder('dr')
+    const query = this.dataRequestRepository
+      .createQueryBuilder('dr')
       .leftJoinAndSelect('dr.user', 'user')
       .orderBy('dr."requestedAt"', 'DESC');
 

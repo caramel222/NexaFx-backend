@@ -6,19 +6,19 @@ import * as path from 'path';
 import { createWriteStream } from 'fs';
 import * as archiver from 'archiver';
 import { format } from 'date-fns';
-import { Transaction } from '../transactions/entities/transaction.entity';
-import { Notification } from '../notifications/entities/notification.entity';
-import { KycRecord } from '../kyc/entities/kyc.entity';
-import { Beneficiary } from '../beneficiaries/entities/beneficiary.entity';
-import { AuditLog } from '../audit-logs/entities/audit-log.entity';
-import { Referral } from '../referrals/entities/referral.entity';
-import { User } from '../entities/user.entity';
-import { DataRequest } from '../entities/data-request.entity';
+import { Transaction } from '../../transactions/entities/transaction.entity';
+import { Notification } from '../../notifications/entities/notification.entity';
+import { KycRecord } from '../../kyc/entities/kyc.entity';
+import { Beneficiary } from '../../beneficiaries/entities/beneficiary.entity';
+import { AuditLog } from '../../audit-logs/entities/audit-log.entity';
+import { Referral } from '../../referrals/entities/referral.entity';
+import { User } from '../user.entity';
 import {
+  DataRequest,
   DataRequestType,
   DataRequestStatus,
 } from '../entities/data-request.entity';
-import { NotificationType } from '../notifications/entities/notification.entity';
+import { NotificationType } from '../../notifications/entities/notification.entity';
 
 interface ExportData {
   profile: any;

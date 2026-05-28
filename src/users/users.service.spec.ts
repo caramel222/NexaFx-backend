@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UsersService } from './users.service';
-import { User, UserRole } from './user.entity';
+import { User, UserRole, UserPlan } from './user.entity';
 import { StellarService } from '../blockchain/stellar/stellar.service';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 
@@ -27,6 +27,8 @@ describe('UsersService', () => {
     isSuspended: false,
     isTwoFactorEnabled: false,
     role: UserRole.USER,
+    plan: UserPlan.FREE,
+    isDeleted: false,
     fcmTokens: [],
     failedLoginAttempts: 0,
     lockedUntil: null,
@@ -35,7 +37,7 @@ describe('UsersService', () => {
     password: 'hashed-password',
     kycRecords: [],
     notifications: [],
-  } as User;
+  };
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({

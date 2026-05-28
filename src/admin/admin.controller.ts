@@ -153,7 +153,10 @@ export class AdminController {
   @Get('users/:id/data-requests')
   @ApiOperation({ summary: 'Get all data requests for a user (Admin only)' })
   @ApiParam({ name: 'id', type: String, description: 'User UUID' })
-  @ApiResponse({ status: 200, description: 'Returns data requests for the user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns data requests for the user',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin role required' })
   @ApiResponse({ status: 404, description: 'User not found' })

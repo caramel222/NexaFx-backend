@@ -1,6 +1,9 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { QueryRunner } from 'typeorm';
-import { Transaction, TransactionType } from '../../transactions/entities/transaction.entity';
+import {
+  Transaction,
+  TransactionType,
+} from '../../transactions/entities/transaction.entity';
 import {
   LedgerAccountType,
   LedgerDirection,
@@ -9,9 +12,14 @@ import {
 
 @Injectable()
 export class LedgerService {
-  async record(transaction: Transaction, queryRunner: QueryRunner): Promise<LedgerEntry[]> {
+  async record(
+    transaction: Transaction,
+    queryRunner: QueryRunner,
+  ): Promise<LedgerEntry[]> {
     if (!queryRunner?.manager) {
-      throw new BadRequestException('A valid query runner is required to record ledger entries');
+      throw new BadRequestException(
+        'A valid query runner is required to record ledger entries',
+      );
     }
 
     const entries = this.buildEntries(transaction);
@@ -113,6 +121,8 @@ export class LedgerService {
       ];
     }
 
-    throw new BadRequestException(`Unsupported transaction type: ${transaction.type}`);
+    throw new BadRequestException(
+      `Unsupported transaction type: ${transaction.type}`,
+    );
   }
 }

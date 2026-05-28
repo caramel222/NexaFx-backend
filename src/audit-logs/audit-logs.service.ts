@@ -10,8 +10,15 @@ import { AuditLogScheduleRepository } from './repositories/audit-log-schedule.re
 import { CreateAuditLogDto } from './dto/create-audit-log.dto';
 import { GetAuditLogsDto } from './dto/get-audit-logs.dto';
 import { AuditEntityType } from './enums/audit-entity-type.enum';
-import { AuditLogExportJob, ExportJobStatus, ExportFormat } from './entities/audit-log-export-job.entity';
-import { AuditLogSchedule, ScheduleFrequency } from './entities/audit-log-schedule.entity';
+import {
+  AuditLogExportJob,
+  ExportJobStatus,
+  ExportFormat,
+} from './entities/audit-log-export-job.entity';
+import {
+  AuditLogSchedule,
+  ScheduleFrequency,
+} from './entities/audit-log-schedule.entity';
 import { AuditLog } from './entities/audit-log.entity';
 import { ConfigService } from '@nestjs/config';
 
@@ -141,7 +148,12 @@ export class AuditLogsService {
    */
   async exportAuditLogs(
     adminUserId: string,
-    filters: { startDate?: string; endDate?: string; userId?: string; action?: string },
+    filters: {
+      startDate?: string;
+      endDate?: string;
+      userId?: string;
+      action?: string;
+    },
     format: 'PDF' | 'CSV',
   ): Promise<{ jobId: string; data?: Buffer; isAsync: boolean }> {
     // Create export job record
@@ -233,7 +245,7 @@ export class AuditLogsService {
   private generatePdfExport(
     logs: AuditLog[],
     filters: Record<string, any>,
-  ): { buffer: Buffer, filename: string } {
+  ): { buffer: Buffer; filename: string } {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const chunks: Buffer[] = [];
 
@@ -247,14 +259,15 @@ export class AuditLogsService {
       .moveDown(0.5);
 
     const now = new Date();
-    const dateRange = filters.startDate && filters.endDate 
-      ? `${filters.startDate} to ${filters.endDate}`
-      : filters.startDate
-      ? `From ${filters.startDate}`
-      : filters.endDate
-      ? `Until ${filters.endDate}`
-      : 'All dates';
-    
+    const dateRange =
+      filters.startDate && filters.endDate
+        ? `${filters.startDate} to ${filters.endDate}`
+        : filters.startDate
+          ? `From ${filters.startDate}`
+          : filters.endDate
+            ? `Until ${filters.endDate}`
+            : 'All dates';
+
     doc
       .fontSize(10)
       .font('Helvetica')
@@ -285,7 +298,10 @@ export class AuditLogsService {
       .text('Entity ID', col5, tableTop)
       .text('IP Address', col6, tableTop);
 
-    doc.moveTo(50, tableTop + 12).lineTo(550, tableTop + 12).stroke();
+    doc
+      .moveTo(50, tableTop + 12)
+      .lineTo(550, tableTop + 12)
+      .stroke();
 
     // Table rows
     let yPos = tableTop + 20;
@@ -321,7 +337,10 @@ export class AuditLogsService {
     }
 
     // Footer with SHA-256 hash
-    doc.moveTo(50, doc.y + 10).lineTo(550, doc.y + 10).stroke();
+    doc
+      .moveTo(50, doc.y + 10)
+      .lineTo(550, doc.y + 10)
+      .stroke();
     doc.moveDown(1);
 
     const hashInput = eventIds.join(',');
@@ -348,9 +367,13 @@ export class AuditLogsService {
   /**
    * Generate CSV export
    */
-  private generateCsvExport(logs: AuditLog[]): { buffer: Buffer; filename: string } {
+  private generateCsvExport(logs: AuditLog[]): {
+    buffer: Buffer;
+    filename: string;
+  } {
     const now = new Date();
-    let csv = 'Timestamp,User ID,Action,Entity,Entity ID,IP Address,User Agent\n';
+    let csv =
+      'Timestamp,User ID,Action,Entity,Entity ID,IP Address,User Agent\n';
 
     for (const log of logs) {
       const timestamp = format(new Date(log.createdAt), 'yyyy-MM-dd HH:mm:ss');
@@ -458,7 +481,10 @@ export class AuditLogsService {
   /**
    * Process scheduled monthly deliveries (called by cron)
    */
-  async processScheduledExports(): Promise<{ processed: number; failed: number }> {
+  async processScheduledExports(): Promise<{
+    processed: number;
+    failed: number;
+  }> {
     const schedules = await this.scheduleRepository.getDueSchedules();
     let processed = 0;
     let failed = 0;

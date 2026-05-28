@@ -122,8 +122,7 @@ describe('TransactionsService fee integration behavior', () => {
 
   const walletsService = {
     resolveWalletForTransaction: jest.fn(async () => ({
-      publicKey:
-        'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
+      publicKey: 'GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF',
       encryptedSecretKey:
         'SAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
     })),
@@ -292,7 +291,7 @@ describe('TransactionsService fee integration behavior', () => {
       transactionRepository.save.mockResolvedValue({
         ...pending,
         status: TransactionStatus.CANCELLED,
-      } as Transaction);
+      });
 
       const result = await service.cancelTransaction(
         'tx-cancel-test',
@@ -365,7 +364,7 @@ describe('TransactionsService fee integration behavior', () => {
       transactionRepository.save.mockResolvedValue({
         ...transactionWithHash,
         status: TransactionStatus.CANCELLED,
-      } as Transaction);
+      });
 
       const loggerWarnSpy = jest.spyOn((service as any).logger, 'warn');
 

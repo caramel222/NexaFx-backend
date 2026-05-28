@@ -11,9 +11,16 @@ import { AuditLogSchedule } from './entities/audit-log-schedule.entity';
 
 @Global() // Make this module global so services can inject it everywhere
 @Module({
-  imports: [TypeOrmModule.forFeature([AuditLog, AuditLogExportJob, AuditLogSchedule])],
+  imports: [
+    TypeOrmModule.forFeature([AuditLog, AuditLogExportJob, AuditLogSchedule]),
+  ],
   controllers: [AuditLogsController],
-  providers: [AuditLogsService, AuditLogsRepository, AuditLogExportJobRepository, AuditLogScheduleRepository],
+  providers: [
+    AuditLogsService,
+    AuditLogsRepository,
+    AuditLogExportJobRepository,
+    AuditLogScheduleRepository,
+  ],
   exports: [AuditLogsService],
 })
 export class AuditLogsModule {}

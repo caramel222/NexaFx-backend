@@ -57,7 +57,10 @@ export class ProposalController {
     },
   })
   @ApiResponse({ status: 403, description: 'Only ADMIN can create proposals' })
-  @ApiResponse({ status: 400, description: 'votingEndAt must be in the future' })
+  @ApiResponse({
+    status: 400,
+    description: 'votingEndAt must be in the future',
+  })
   async createProposal(
     @Request() req: { user: { userId: string; user: any } },
     @Body() createProposalDto: CreateProposalDto,
@@ -92,8 +95,14 @@ export class ProposalController {
     },
   })
   @ApiResponse({ status: 404, description: 'Proposal not found' })
-  @ApiResponse({ status: 400, description: 'Proposal not active or voting ended' })
-  @ApiResponse({ status: 409, description: 'Voter has already voted on this proposal' })
+  @ApiResponse({
+    status: 400,
+    description: 'Proposal not active or voting ended',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Voter has already voted on this proposal',
+  })
   async castVote(
     @Param('id') proposalId: string,
     @Request() req: { user: { userId: string; user: any } },

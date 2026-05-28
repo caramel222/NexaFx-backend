@@ -17,8 +17,6 @@ export enum VoteChoice {
 
 @Entity('votes')
 @Index(['proposalId', 'voterId'], { unique: true })
-@Index(['proposalId'])
-@Index(['voterId'])
 export class Vote {
   @PrimaryGeneratedColumn('uuid')
   id: string;

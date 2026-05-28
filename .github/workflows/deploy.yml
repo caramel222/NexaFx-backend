@@ -1,8 +1,6 @@
 name: Deploy to Render
 
 on:
-  push:
-    branches: [ "main" ]
   workflow_run:
     workflows: ["CI Pipeline"]
     types:
@@ -40,7 +38,7 @@ jobs:
         id: trigger-deploy
         run: |
           echo "Triggering deployment via Render deploy hook"
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL })
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }})
           HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
           
           if [ "$HTTP_CODE" != "200" ] && [ "$HTTP_CODE" != "201" ]; then
@@ -91,7 +89,7 @@ jobs:
             sleep $SLEEP_INTERVAL
           done
 
-          echo "❌ Deployment timed out after $((MAX_ATTEMPTS * SLEEP_INTERVAL) seconds"
+          echo "❌ Deployment timed out after $((MAX_ATTEMPTS * SLEEP_INTERVAL)) seconds"
           exit 1
 
       - name: Notify PR Comment on Failure
@@ -129,7 +127,7 @@ jobs:
               ${DEPLOY_ERROR || 'No error details available'}
               \`\`\`
               
-              To rollback run the \`rollback.yml\` workflow with this deploy ID.
+              To rollback, use the Render dashboard to redeploy a previous successful deploy.
               `
               
               await github.rest.issues.createComment({

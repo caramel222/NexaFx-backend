@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
 
 export enum ScheduleFrequency {
   MONTHLY = 'MONTHLY',
@@ -16,7 +22,11 @@ export class AuditLogSchedule {
   @Column({ type: 'varchar', length: 255 })
   adminEmail: string;
 
-  @Column({ type: 'enum', enum: ScheduleFrequency, default: ScheduleFrequency.MONTHLY })
+  @Column({
+    type: 'enum',
+    enum: ScheduleFrequency,
+    default: ScheduleFrequency.MONTHLY,
+  })
   frequency: ScheduleFrequency;
 
   @Column({ type: 'timestamptz', nullable: true })

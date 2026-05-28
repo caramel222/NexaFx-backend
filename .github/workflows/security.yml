@@ -20,12 +20,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Scan for leaked secrets
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3
         with:
           extra_args: --results=verified,unknown --fail --config=.trufflehog.yml
 
@@ -34,10 +34,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -63,7 +63,7 @@ jobs:
           - javascript-typescript
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3

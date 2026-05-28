@@ -50,8 +50,6 @@ export class ScheduledJobsService {
     private readonly rateAlertsService: RateAlertsService,
     private readonly webhookService: WebhookService,
     private readonly dataSource: DataSource,
-  @InjectRepository(IdempotencyRecord)
-  private readonly idempotencyRepository: Repository<IdempotencyRecord>,
     private readonly currencyPairService: CurrencyPairService,
     private readonly proposalService: ProposalService,
     private readonly auditLogsService: AuditLogsService,
@@ -246,7 +244,9 @@ export class ScheduledJobsService {
       const result = await this.ledgerVerificationService.verify();
 
       if (result.status === 'BALANCED') {
-        this.logger.log('[Scheduled Job] Ledger verification completed: balanced');
+        this.logger.log(
+          '[Scheduled Job] Ledger verification completed: balanced',
+        );
         return;
       }
 
@@ -346,7 +346,9 @@ export class ScheduledJobsService {
    */
   @Cron('0 1 * * *')
   async processScheduledAuditExports(): Promise<void> {
-    this.logger.log('[Scheduled Job] Starting scheduled audit log exports processing');
+    this.logger.log(
+      '[Scheduled Job] Starting scheduled audit log exports processing',
+    );
 
     try {
       const result = await this.auditLogsService.processScheduledExports();
@@ -744,6 +746,11 @@ export class ScheduledJobsService {
       this.logger.error(
         '[Scheduled Job] Failed to finalize expired proposals:',
         error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  /**
    * Clean up expired idempotency records every day at 3 AM.
    * Deletes records where expiresAt < NOW().
    */

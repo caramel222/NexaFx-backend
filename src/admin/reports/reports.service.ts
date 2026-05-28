@@ -1,15 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between } from 'typeorm';
-import { User } from '../users/user.entity';
-import { Transaction } from '../transactions/entities/transaction.entity';
-import { ReportSchedule } from './report-schedule.entity';
-import { ReportJob } from './report-job.entity';
-import * as csv from 'csv-stringify';
-import { promisify } from 'util';
+import { User } from '../../users/user.entity';
+import { Transaction } from '../../transactions/entities/transaction.entity';
+import {
+  ReportSchedule,
+  ReportType,
+  ReportFrequency,
+} from './report-schedule.entity';
+import { ReportJob, JobStatus } from './report-job.entity';
 import { v4 as uuidv4 } from 'uuid';
 
-const stringify = promisify(csv);
+function toCSV(rows: Record<string, any>[]): string {
+  if (rows.length === 0) return '';
+  const headers = Object.keys(rows[0]);
+  const lines = [
+    headers.join(','),
+    ...rows.map((row) =>
+      headers.map((h) => JSON.stringify(row[h] ?? '')).join(','),
+    ),
+  ];
+  return lines.join('\n');
+}
 
 @Injectable()
 export class ReportsService {
@@ -55,8 +67,7 @@ export class ReportsService {
     const result = await query.groupBy('t.feeCurrency').getRawMany();
 
     if (format === 'csv') {
-      const csvData: string = await stringify(result);
-      return csvData;
+      return toCSV(result);
     }
 
     return result;
@@ -65,16 +76,14 @@ export class ReportsService {
   async getCohortReport(month: string, format?: string) {
     const [year, monthNum] = month.split('-');
     const startDate = new Date(`${year}-${monthNum}-01`);
-    const endDate = new Date(year, parseInt(monthNum), 0); // Last day of the month
+    const endDate = new Date(parseInt(year), parseInt(monthNum), 0);
 
-    // Users acquired in the month
     const users = await this.userRepository.find({
       where: {
         createdAt: Between(startDate, endDate),
       },
     });
 
-    // For simplicity, we'll return mock retention data
     const cohortData = {
       month,
       acquired: users.length,
@@ -86,8 +95,7 @@ export class ReportsService {
     };
 
     if (format === 'csv') {
-      const csvData: string = await stringify([cohortData]);
-      return csvData;
+      return toCSV([cohortData]);
     }
 
     return cohortData;
@@ -113,8 +121,7 @@ export class ReportsService {
     }));
 
     if (format === 'csv') {
-      const csvData: string = await stringify(funnelData);
-      return csvData;
+      return toCSV(funnelData);
     }
 
     return funnelData;
@@ -136,8 +143,7 @@ export class ReportsService {
 
     if (format === 'csv') {
       const result = await query.getRawMany();
-      const csvData: string = await stringify(result);
-      return csvData;
+      return toCSV(result);
     }
 
     return query.getRawMany();
@@ -147,13 +153,11 @@ export class ReportsService {
     const jobId = uuidv4();
     const job = this.reportJobRepository.create({
       jobId,
-      status: 'PENDING',
+      status: JobStatus.PENDING,
       parameters: JSON.stringify(parameters),
     });
     await this.reportJobRepository.save(job);
 
-    // In a real implementation, we would trigger an async job here.
-    // For now, we'll just return the jobId.
     return { jobId };
   }
 
@@ -166,8 +170,8 @@ export class ReportsService {
   }
 
   async createReportSchedule(
-    reportType: string,
-    frequency: string,
+    reportType: ReportType,
+    frequency: ReportFrequency,
     recipientEmail: string,
     parameters: any,
   ) {
@@ -176,7 +180,7 @@ export class ReportsService {
       frequency,
       recipientEmail,
       parameters: JSON.stringify(parameters),
-      nextRunAt: new Date(), // Set to now for simplicity, but in reality would calculate based on frequency
+      nextRunAt: new Date(),
       active: true,
     });
     return this.reportScheduleRepository.save(schedule);

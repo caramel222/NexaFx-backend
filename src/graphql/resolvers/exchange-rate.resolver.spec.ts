@@ -105,7 +105,7 @@ describe('ExchangeRateResolver', () => {
 
   describe('currencies', () => {
     it('returns all active currencies', async () => {
-      currenciesService.findAll.mockResolvedValue(mockCurrencies as any);
+      currenciesService.findAll.mockResolvedValue(mockCurrencies);
 
       const result = await resolver.currencies();
 

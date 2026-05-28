@@ -101,7 +101,9 @@ export class WalletsService {
 
     const user = await this.usersService.findById(userId);
     if (!user?.walletPublicKey) {
-      throw new BadRequestException('User does not have a Stellar wallet configured');
+      throw new BadRequestException(
+        'User does not have a Stellar wallet configured',
+      );
     }
     return {
       publicKey: user.walletPublicKey,
@@ -117,7 +119,9 @@ export class WalletsService {
 
     const withBalances = await Promise.all(
       wallets.map(async (w) => {
-        const balances = await this.stellarService.getWalletBalances(w.publicKey);
+        const balances = await this.stellarService.getWalletBalances(
+          w.publicKey,
+        );
         return {
           id: w.id,
           publicKey: w.publicKey,
@@ -139,8 +143,7 @@ export class WalletsService {
   ): Promise<Omit<WalletListItem, 'balances'>> {
     const existing = await this.walletRepository.count({ where: { userId } });
     const label =
-      dto?.label?.trim() ||
-      `Wallet ${existing > 0 ? existing + 1 : 1}`;
+      dto?.label?.trim() || `Wallet ${existing > 0 ? existing + 1 : 1}`;
 
     const generated = await this.stellarService.generateWallet(userId, {
       source: 'wallets.generate',
@@ -176,7 +179,9 @@ export class WalletsService {
       where: { userId, publicKey: normalized },
     });
     if (dup) {
-      throw new BadRequestException('This wallet is already linked to your account');
+      throw new BadRequestException(
+        'This wallet is already linked to your account',
+      );
     }
 
     const label = dto.label?.trim() || 'Imported (watch-only)';

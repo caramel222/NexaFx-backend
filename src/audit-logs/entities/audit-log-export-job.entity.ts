@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+} from 'typeorm';
 
 export enum ExportJobStatus {
   PENDING = 'PENDING',
@@ -21,7 +28,11 @@ export class AuditLogExportJob {
   @Index()
   adminUserId: string;
 
-  @Column({ type: 'enum', enum: ExportJobStatus, default: ExportJobStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: ExportJobStatus,
+    default: ExportJobStatus.PENDING,
+  })
   @Index()
   status: ExportJobStatus;
 

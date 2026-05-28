@@ -1,9 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
-import { UsersService } from './users.service';
+import { UsersService } from '../users.service';
 import { RefreshTokensService } from '../../tokens/refresh-tokens.service';
-import { User } from '../entities/user.entity';
+import { User } from '../user.entity';
 import { DataRequest } from '../entities/data-request.entity';
 import {
   DataRequestType,
@@ -202,11 +202,11 @@ export class AccountDeletionService {
         {
           fullName: 'DELETED',
           documentNumber: 'DELETED',
-          documentFrontUrl: null,
-          documentBackUrl: null,
-          selfieUrl: null,
+          documentFrontUrl: null as any,
+          documentBackUrl: null as any,
+          selfieUrl: null as any,
           rejectionReason: 'Account deleted',
-          status: 'rejected',
+          status: 'rejected' as any,
         },
       );
 
@@ -232,8 +232,8 @@ export class AccountDeletionService {
         {
           title: 'Account Deleted',
           message: 'This account has been anonymized',
-          metadata: null,
-          actionUrl: null,
+          metadata: null as any,
+          actionUrl: null as any,
         },
       );
 
@@ -301,7 +301,7 @@ export class AccountDeletionService {
 
     try {
       // Get user
-      const user = await queryRunner.manager.findOne(User as any, {
+      const user = await queryRunner.manager.findOne(User, {
         where: { id: userId },
       });
 
@@ -312,20 +312,20 @@ export class AccountDeletionService {
       // Anonymize PII fields on user record
       const suffix = `DELETED_${userId}`;
       user.email = `deleted_${suffix}@nexafx.invalid`;
-      (user as any).firstName = 'DELETED';
-      (user as any).lastName = suffix;
-      (user as any).phone = null;
-      (user as any).walletPublicKey = `deleted_${suffix}`;
-      (user as any).walletSecretKeyEncrypted = `encrypted_deleted_${suffix}`;
-      (user as any).twoFactorSecret = null;
-      (user as any).isVerified = false;
-      (user as any).isTwoFactorEnabled = false;
-      (user as any).fcmTokens = [];
-      (user as any).balances = {};
-      (user as any).isSuspended = false;
+      user.firstName = 'DELETED';
+      user.lastName = suffix;
+      user.phone = null;
+      user.walletPublicKey = `deleted_${suffix}`;
+      user.walletSecretKeyEncrypted = `encrypted_deleted_${suffix}`;
+      user.twoFactorSecret = null;
+      user.isVerified = false;
+      user.isTwoFactorEnabled = false;
+      user.fcmTokens = [];
+      user.balances = {};
+      user.isSuspended = false;
       user.isDeleted = true;
 
-      await queryRunner.manager.save(User as any, user);
+      await queryRunner.manager.save(User, user);
 
       // Revoke all refresh tokens
       await queryRunner.manager.update(
@@ -336,14 +336,14 @@ export class AccountDeletionService {
 
       // Anonymize KYC records
       await queryRunner.manager.update(
-        KycRecord as any,
+        KycRecord,
         { userId },
         {
           fullName: 'DELETED',
           documentNumber: 'DELETED',
-          documentFrontUrl: null,
-          documentBackUrl: null,
-          selfieUrl: null,
+          documentFrontUrl: null as any,
+          documentBackUrl: null as any,
+          selfieUrl: null as any,
           rejectionReason: 'Account deleted',
           status: 'rejected' as any,
         },
@@ -351,7 +351,7 @@ export class AccountDeletionService {
 
       // Anonymize beneficiaries
       await queryRunner.manager.update(
-        Beneficiary as any,
+        Beneficiary,
         { userId },
         {
           nickname: 'DELETED',
@@ -360,10 +360,10 @@ export class AccountDeletionService {
       );
 
       // Delete notifications
-      await queryRunner.manager.delete(Notification as any, { userId });
+      await queryRunner.manager.delete(Notification, { userId });
 
       // Delete audit logs
-      await queryRunner.manager.delete(AuditLog as any, { userId });
+      await queryRunner.manager.delete(AuditLog, { userId });
 
       // Delete price alerts
       await queryRunner.manager.delete('rate_alerts', { userId });
@@ -379,7 +379,6 @@ export class AccountDeletionService {
     } finally {
       await queryRunner.release();
     }
-  }
   }
 
   async getDeletionStatus(userId: string): Promise<DataRequest | null> {

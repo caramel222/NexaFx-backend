@@ -14,6 +14,10 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { BeneficiariesModule } from '../beneficiaries/beneficiaries.module';
 import { WalletsModule } from '../wallets/wallets.module';
 import { LedgerModule } from '../ledger/ledger.module';
+import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { FirebaseModule } from '../firebase/firebase.module';
+import { WebhooksModule } from '../webhooks/webhooks.module';
+import { CommonModule } from '../common/common.module';
 
 @Module({
   imports: [
@@ -28,6 +32,10 @@ import { LedgerModule } from '../ledger/ledger.module';
     BeneficiariesModule,
     WalletsModule,
     LedgerModule,
+    AuditLogsModule,
+    FirebaseModule,
+    WebhooksModule,
+    CommonModule,
   ],
   controllers: [TransactionsController],
   providers: [TransactionsService, TransactionVerificationService],

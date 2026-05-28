@@ -6,6 +6,7 @@ import {
   Index,
 } from 'typeorm';
 
+@Index(['key', 'userId'], { unique: true })
 @Entity('idempotency_records')
 export class IdempotencyRecord {
   @PrimaryGeneratedColumn('uuid')
@@ -20,7 +21,7 @@ export class IdempotencyRecord {
   @Column({ type: 'varchar', length: 255 })
   endpoint: string;
 
-  @Column({ type: 'char', length: 64 }) // SHA-256 produces 64 hex characters
+  @Column({ type: 'char', length: 64 })
   requestHash: string;
 
   @Column({ type: 'int' })
@@ -34,6 +35,4 @@ export class IdempotencyRecord {
 
   @Column({ type: 'timestamp with time zone' })
   expiresAt: Date;
-
-  @Index(['key', 'userId'], { unique: true })
 }

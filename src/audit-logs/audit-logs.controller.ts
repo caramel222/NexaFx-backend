@@ -82,7 +82,8 @@ export class AuditLogsController {
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiOperation({
     summary: 'Export audit logs (PDF/CSV)',
-    description: 'Small exports return immediately; large exports return jobId for polling',
+    description:
+      'Small exports return immediately; large exports return jobId for polling',
   })
   @ApiResponse({
     status: 200,
@@ -93,12 +94,22 @@ export class AuditLogsController {
     @Body() dto: ExportAuditLogsDto,
     @Res() res: Response,
   ) {
-    const result = await this.auditLogsService.exportAuditLogs(user.userId, dto, dto.format);
+    const result = await this.auditLogsService.exportAuditLogs(
+      user.userId,
+      dto,
+      dto.format,
+    );
 
     if (!result.isAsync && result.data) {
       // Stream small export directly
-      res.setHeader('Content-Type', dto.format === 'PDF' ? 'application/pdf' : 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename="audit-export.${dto.format.toLowerCase()}"`);
+      res.setHeader(
+        'Content-Type',
+        dto.format === 'PDF' ? 'application/pdf' : 'text/csv',
+      );
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="audit-export.${dto.format.toLowerCase()}"`,
+      );
       res.send(result.data);
     } else {
       // Return job ID for polling
@@ -113,10 +124,7 @@ export class AuditLogsController {
     status: 200,
     description: 'Export job status',
   })
-  async getJobStatus(
-    @CurrentUser() user: any,
-    @Param('id') jobId: string,
-  ) {
+  async getJobStatus(@CurrentUser() user: any, @Param('id') jobId: string) {
     return this.auditLogsService.getExportJobStatus(user.userId, jobId);
   }
 
@@ -128,10 +136,16 @@ export class AuditLogsController {
     @Param('id') jobId: string,
     @Res() res: Response,
   ) {
-    const result = await this.auditLogsService.downloadExportJob(user.userId, jobId);
+    const result = await this.auditLogsService.downloadExportJob(
+      user.userId,
+      jobId,
+    );
     const isJson = result.filename.endsWith('.csv');
     res.setHeader('Content-Type', isJson ? 'text/csv' : 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${result.filename}"`,
+    );
     res.send(result.buffer);
   }
 
@@ -146,6 +160,9 @@ export class AuditLogsController {
     @CurrentUser() user: any,
     @Body() dto: ScheduleAuditLogDeliveryDto,
   ) {
-    return this.auditLogsService.scheduleMonthlyDelivery(user.userId, dto.email);
+    return this.auditLogsService.scheduleMonthlyDelivery(
+      user.userId,
+      dto.email,
+    );
   }
 }

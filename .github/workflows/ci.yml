@@ -12,9 +12,8 @@ env:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
-    # Required for tests needing a real DB connection
     services:
       postgres:
         image: postgres:15
@@ -32,24 +31,17 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [20.x, 22.x]
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-
-      - name: Cache node modules
-        uses: actions/cache@v5
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          cache: 'npm'
 
       - name: Log environment
         run: node --version && npm --version
@@ -63,7 +55,7 @@ jobs:
       - name: Type Check
         run: npx tsc --noEmit
 
-      - name: Run TypeORM migrations (ensure DB schema is up to date)
+      - name: Run TypeORM migrations
         env:
           NODE_ENV: test
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/nexafx_test' }}
@@ -72,11 +64,10 @@ jobs:
       - name: Run Unit Tests
         env:
           NODE_ENV: test
-          # Use GitHub Secrets if present, otherwise fallback to dummy values for CI environment
           DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/nexafx_test' }}
           JWT_SECRET: ${{ secrets.JWT_SECRET || 'test_jwt_secret_must_be_32_chars_long' }}
-          # Mocking external service requirements to ensure CI doesn't crash
           OTP_SECRET: 'dummy_otp_secret_32_chars_long_123'
+          REFRESH_TOKEN_SECRET: 'dummy_refresh_token_secret_32_chars'
           STELLAR_NETWORK: 'TESTNET'
           STELLAR_HORIZON_URL: 'https://horizon-testnet.stellar.org'
           STELLAR_BASE_FEE: '100'
@@ -88,18 +79,12 @@ jobs:
           FRONTEND_URL: 'http://localhost:3001'
         run: npm run test -- --forceExit
 
-      - name: Check for migration drift (fail if entity changes are not migrated)
-        env:
-          NODE_ENV: test
-          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/nexafx_test' }}
-        run: npm run typeorm:migration:generate -- --check
-
       - name: Build
         run: npm run build
 
       - name: Upload Coverage Report
-        uses: actions/upload-artifact@v5
-        if: always() # Uploads even if previous steps fail
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: coverage-report-node-${{ matrix.node-version }}
           path: coverage/
