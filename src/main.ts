@@ -19,15 +19,6 @@ async function bootstrap() {
   // Security headers
   app.use(helmet());
 
-  // CORS
-  app.enableCors({
-    origin:
-      configService.get<string>('FRONTEND_URL') || 'http://localhost:3001',
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true,
-  });
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -58,13 +49,17 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
 
-  if (
-    process.env.NODE_ENV !== 'production' ||
-    configService.get<boolean>('ENABLE_SWAGGER')
-  ) {
-    const swaggerDoc = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('api/docs', app, swaggerDoc);
-  }
+  const swaggerDoc = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, swaggerDoc);
+
+  // CORS
+  app.enableCors({
+    // origin:
+    //   configService.get<string>('FRONTEND_URL') || 'http://localhost:3001',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
 
   // Note: do NOT expose uploads via a global static asset mount. KYC files
   // must remain restricted to admin-only access. Serve files via the
@@ -83,9 +78,4 @@ async function bootstrap() {
 // Handle startup errors explicitly so linters don't complain about an
 // unhandled/ignored promise (no-floating-promises). Log the error and exit
 // with a non-zero code so process managers notice failures.
-bootstrap().catch((err) => {
-  // Use console.error here rather than any logger to ensure early errors
-  // during bootstrap are visible.
-  console.error('Fatal error during bootstrap:', err);
-  process.exit(1);
-});
+void bootstrap();
