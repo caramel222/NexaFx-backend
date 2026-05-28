@@ -202,6 +202,7 @@ describe('TransactionsService fee integration behavior', () => {
         feeAmount: 1.25,
         feeCurrency: 'XLM',
       }),
+      expect.anything(),
     );
   });
 
@@ -225,6 +226,7 @@ describe('TransactionsService fee integration behavior', () => {
         feeAmount: 1.25,
         feeCurrency: 'XLM',
       }),
+      expect.anything(),
     );
   });
 
@@ -246,6 +248,7 @@ describe('TransactionsService fee integration behavior', () => {
       'tx-123',
       'user-1',
       expect.objectContaining({ feeAmount: 0 }),
+      expect.anything(),
     );
   });
 

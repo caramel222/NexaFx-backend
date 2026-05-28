@@ -1,8 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ThrottlerStorageService } from '@nestjs/throttler';
 import { UsersService } from './users.service';
 import { User, UserRole, UserPlan } from './user.entity';
+import { RateLimitConfig } from './rate-limit-config.entity';
 import { StellarService } from '../blockchain/stellar/stellar.service';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
 
@@ -53,6 +55,14 @@ describe('UsersService', () => {
           },
         },
         {
+          provide: getRepositoryToken(RateLimitConfig),
+          useValue: {
+            findOne: jest.fn(),
+            find: jest.fn(),
+            save: jest.fn(),
+          },
+        },
+        {
           provide: StellarService,
           useValue: {
             getWalletBalances: jest.fn(),
@@ -62,6 +72,14 @@ describe('UsersService', () => {
           provide: ExchangeRatesService,
           useValue: {
             getRate: jest.fn(),
+          },
+        },
+        {
+          provide: ThrottlerStorageService,
+          useValue: {
+            getRecord: jest.fn(),
+            addRecord: jest.fn(),
+            increment: jest.fn(),
           },
         },
       ],

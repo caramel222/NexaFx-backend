@@ -9,6 +9,7 @@ import {
   TransactionType,
 } from '../transactions/entities/transaction.entity';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { DataRequest } from '../users/entities/data-request.entity';
 import {
   BadRequestException,
   ForbiddenException,
@@ -102,9 +103,28 @@ describe('AdminService', () => {
           },
         },
         {
+          provide: getRepositoryToken(DataRequest),
+          useValue: {
+            find: jest.fn(),
+            findOne: jest.fn(),
+            save: jest.fn(),
+            count: jest.fn(),
+            createQueryBuilder: jest.fn(() => ({
+              select: jest.fn().mockReturnThis(),
+              where: jest.fn().mockReturnThis(),
+              andWhere: jest.fn().mockReturnThis(),
+              skip: jest.fn().mockReturnThis(),
+              take: jest.fn().mockReturnThis(),
+              orderBy: jest.fn().mockReturnThis(),
+              getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+            })),
+          },
+        },
+        {
           provide: AuditLogsService,
           useValue: {
             logAuthEvent: jest.fn(),
+            logTransactionEvent: jest.fn(),
           },
         },
       ],

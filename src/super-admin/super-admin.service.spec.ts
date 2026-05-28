@@ -17,6 +17,7 @@ import { StellarService } from '../blockchain/stellar/stellar.service';
 import { UsersService } from '../users/users.service';
 import { User, UserRole } from '../users/user.entity';
 import { EncryptionService } from '../common/services/encryption.service';
+import { WalletsService } from '../wallets/wallets.service';
 import { PlatformConfig } from './entities/platform-config.entity';
 import { SuperAdminService } from './super-admin.service';
 
@@ -125,6 +126,14 @@ describe('SuperAdminService', () => {
               logs: [],
               pagination: { total: 0, page: 1, limit: 20, totalPages: 0 },
             }),
+          },
+        },
+        {
+          provide: WalletsService,
+          useValue: {
+            createWallet: jest.fn(),
+            getWalletsByUserId: jest.fn(),
+            seedPrimaryWalletFromUserCredentials: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

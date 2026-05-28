@@ -5,18 +5,25 @@ jest.mock('bcrypt', () => ({
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { ScheduledJobsService } from './scheduled-jobs.service';
 import {
   Transaction,
   TransactionStatus,
 } from '../transactions/entities/transaction.entity';
 import { Notification } from '../notifications/entities/notification.entity';
+import { DataRequest } from '../users/entities/data-request.entity';
+import { IdempotencyRecord } from '../common/entities/idempotency-record.entity';
 import { TransactionsService } from '../transactions/services/transaction.service';
 import { StellarService } from '../blockchain/stellar/stellar.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { UsersService } from '../users/users.service';
 import { RateAlertsService } from '../rate-alerts/rate-alerts.service';
 import { LedgerVerificationService } from '../ledger/services/ledger-verification.service';
+import { WebhookService } from '../webhooks/services/webhook.service';
+import { CurrencyPairService } from '../currencies/services/currency-pair.service';
+import { ProposalService } from '../dao/services/proposal.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 describe('ScheduledJobsService', () => {
   let service: ScheduledJobsService;
@@ -58,6 +65,14 @@ describe('ScheduledJobsService', () => {
           useValue: mockNotificationRepository,
         },
         {
+          provide: getRepositoryToken(DataRequest),
+          useValue: { find: jest.fn(), findOne: jest.fn(), save: jest.fn(), createQueryBuilder: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(IdempotencyRecord),
+          useValue: { find: jest.fn(), findOne: jest.fn(), save: jest.fn(), delete: jest.fn(), createQueryBuilder: jest.fn(() => ({ delete: jest.fn().mockReturnThis(), from: jest.fn().mockReturnThis(), where: jest.fn().mockReturnThis(), execute: jest.fn().mockResolvedValue({ affected: 0 }) })) },
+        },
+        {
           provide: TransactionsService,
           useValue: mockTransactionsService,
         },
@@ -80,6 +95,26 @@ describe('ScheduledJobsService', () => {
         {
           provide: LedgerVerificationService,
           useValue: mockLedgerVerificationService,
+        },
+        {
+          provide: WebhookService,
+          useValue: { dispatch: jest.fn() },
+        },
+        {
+          provide: DataSource,
+          useValue: { createQueryRunner: jest.fn(() => ({ connect: jest.fn(), startTransaction: jest.fn(), commitTransaction: jest.fn(), rollbackTransaction: jest.fn(), release: jest.fn(), manager: { save: jest.fn() } })) },
+        },
+        {
+          provide: CurrencyPairService,
+          useValue: { findByCodes: jest.fn(), validatePair: jest.fn() },
+        },
+        {
+          provide: ProposalService,
+          useValue: { getExpiredActiveProposals: jest.fn().mockResolvedValue([]), finalizeProposal: jest.fn() },
+        },
+        {
+          provide: AuditLogsService,
+          useValue: { logEvent: jest.fn(), createLog: jest.fn(), logTransactionEvent: jest.fn() },
         },
       ],
     }).compile();

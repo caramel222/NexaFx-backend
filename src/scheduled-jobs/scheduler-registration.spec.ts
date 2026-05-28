@@ -4,37 +4,26 @@ jest.mock('bcrypt', () => ({
 }));
 
 import { Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { HttpService } from '@nestjs/axios';
+import { DataSource } from 'typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ScheduleModule, SchedulerRegistry } from '@nestjs/schedule';
 import { ScheduledJobsService } from './scheduled-jobs.service';
 import { TransactionVerificationService } from '../transactions/services/transaction-verification.service';
 import { TransactionsService } from '../transactions/services/transaction.service';
+import { Transaction } from '../transactions/entities/transaction.entity';
+import { Notification } from '../notifications/entities/notification.entity';
+import { DataRequest } from '../users/entities/data-request.entity';
+import { IdempotencyRecord } from '../common/entities/idempotency-record.entity';
 import { UsersService } from '../users/users.service';
 import { RateAlertsService } from '../rate-alerts/rate-alerts.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
-import { ExchangeRatesProviderClient } from '../exchange-rates/providers/exchange-rates.provider';
-import { ExchangeRatesCache } from '../exchange-rates/cache/exchange-rates.cache';
-import { CurrenciesService } from '../currencies/currencies.service';
-import { FeesService } from '../fees/fees.service';
-import { ReferralsService } from '../referrals/referrals.service';
-import { BeneficiariesService } from '../beneficiaries/beneficiaries.service';
-import { FirebaseService } from '../firebase/firebase.service';
-import { AuditLogsService } from '../audit-logs/audit-logs.service';
-import { AuditLogsRepository } from '../audit-logs/audit-logs.repository';
 import { StellarService } from '../blockchain/stellar/stellar.service';
-import { Transaction } from '../transactions/entities/transaction.entity';
-import { Notification } from '../notifications/entities/notification.entity';
-import { User } from '../users/user.entity';
-import { RateAlert } from '../rate-alerts/entities/rate-alert.entity';
-import { Currency } from '../currencies/currency.entity';
-import { FeeConfig } from '../fees/entities/fee-config.entity';
-import { FeeRecord } from '../fees/entities/fee-record.entity';
-import { Referral } from '../referrals/entities/referral.entity';
-import { Beneficiary } from '../beneficiaries/entities/beneficiary.entity';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { WebhookService } from '../webhooks/services/webhook.service';
+import { CurrencyPairService } from '../currencies/services/currency-pair.service';
+import { ProposalService } from '../dao/services/proposal.service';
+import { LedgerVerificationService } from '../ledger/services/ledger-verification.service';
 
 type ProviderWrapper = {
   name: string;
@@ -63,44 +52,7 @@ describe('Scheduler registration', () => {
     createQueryBuilder: jest.fn(),
   };
 
-  const configServiceMock = {
-    get: jest.fn((key: string) => {
-      const values: Record<string, string> = {
-        EXCHANGE_RATES_PROVIDER_BASE_URL: 'https://api.exchangerate.host',
-        EXCHANGE_RATES_PROVIDER_TIMEOUT_MS: '5000',
-        EXCHANGE_RATES_CACHE_TTL_SECONDS: '600',
-        EXCHANGE_RATES_CACHE_MAX_SIZE: '1000',
-        REFERRAL_REWARD_AMOUNT: '0',
-        REFERRAL_REWARD_CURRENCY: 'USD',
-        JWT_SECRET: 'test-secret',
-        NODE_ENV: 'test',
-        JWT_EXPIRES_IN: '15m',
-      };
-
-      return values[key];
-    }),
-  };
-
-  const httpServiceMock = {
-    get: jest.fn(),
-  };
-
-  const auditLogsRepositoryMock = {
-    createAuditLog: jest.fn(),
-    findLogsWithPagination: jest.fn(),
-  };
-
-  const firebaseServiceMock = {
-    sendToTokens: jest.fn(),
-  };
-
-  const stellarServiceMock = {
-    verifyTransaction: jest.fn(),
-    getWalletBalances: jest.fn(),
-    createTransaction: jest.fn(),
-    signTransaction: jest.fn(),
-    submitTransaction: jest.fn(),
-  };
+  const serviceMock = {};
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -110,32 +62,21 @@ describe('Scheduler registration', () => {
       providers: [
         ScheduledJobsService,
         TransactionVerificationService,
-        TransactionsService,
-        UsersService,
-        RateAlertsService,
-        NotificationsService,
-        ExchangeRatesService,
-        ExchangeRatesProviderClient,
-        ExchangeRatesCache,
-        CurrenciesService,
-        FeesService,
-        ReferralsService,
-        BeneficiariesService,
-        AuditLogsService,
-        { provide: ConfigService, useValue: configServiceMock },
-        { provide: HttpService, useValue: httpServiceMock },
-        { provide: AuditLogsRepository, useValue: auditLogsRepositoryMock },
-        { provide: FirebaseService, useValue: firebaseServiceMock },
-        { provide: StellarService, useValue: stellarServiceMock },
+        { provide: TransactionsService, useValue: serviceMock },
+        { provide: UsersService, useValue: { syncWalletBalanceSnapshots: jest.fn().mockResolvedValue({ processed: 0, updated: 0, failed: 0 }) } },
+        { provide: RateAlertsService, useValue: { checkAndTriggerAlerts: jest.fn().mockResolvedValue({ checked: 0, triggered: 0, reactivated: 0 }) } },
+        { provide: NotificationsService, useValue: serviceMock },
+        { provide: StellarService, useValue: { verifyTransaction: jest.fn(), getWalletBalances: jest.fn() } },
+        { provide: AuditLogsService, useValue: { logEvent: jest.fn(), createLog: jest.fn(), logTransactionEvent: jest.fn() } },
+        { provide: WebhookService, useValue: { dispatch: jest.fn() } },
+        { provide: CurrencyPairService, useValue: serviceMock },
+        { provide: ProposalService, useValue: { getExpiredActiveProposals: jest.fn().mockResolvedValue([]), finalizeProposal: jest.fn() } },
+        { provide: LedgerVerificationService, useValue: { verify: jest.fn().mockResolvedValue({ status: 'BALANCED', discrepancies: [] }) } },
+        { provide: DataSource, useValue: { createQueryRunner: jest.fn(() => ({ connect: jest.fn(), startTransaction: jest.fn(), commitTransaction: jest.fn(), rollbackTransaction: jest.fn(), release: jest.fn(), manager: { save: jest.fn() } })) } },
         { provide: getRepositoryToken(Transaction), useValue: repositoryMock },
         { provide: getRepositoryToken(Notification), useValue: repositoryMock },
-        { provide: getRepositoryToken(User), useValue: repositoryMock },
-        { provide: getRepositoryToken(RateAlert), useValue: repositoryMock },
-        { provide: getRepositoryToken(Currency), useValue: repositoryMock },
-        { provide: getRepositoryToken(FeeConfig), useValue: repositoryMock },
-        { provide: getRepositoryToken(FeeRecord), useValue: repositoryMock },
-        { provide: getRepositoryToken(Referral), useValue: repositoryMock },
-        { provide: getRepositoryToken(Beneficiary), useValue: repositoryMock },
+        { provide: getRepositoryToken(DataRequest), useValue: repositoryMock },
+        { provide: getRepositoryToken(IdempotencyRecord), useValue: { ...repositoryMock, createQueryBuilder: jest.fn(() => ({ delete: jest.fn().mockReturnThis(), from: jest.fn().mockReturnThis(), where: jest.fn().mockReturnThis(), execute: jest.fn().mockResolvedValue({ affected: 0 }) })) } },
       ],
     }).compile();
   });
@@ -170,7 +111,7 @@ describe('Scheduler registration', () => {
     await moduleRef.init();
 
     const registry = moduleRef.get(SchedulerRegistry);
-    expect(registry.getCronJobs().size).toBe(7);
+    expect(registry.getCronJobs().size).toBe(14);
     expect(warnSpy).not.toHaveBeenCalledWith(
       expect.stringContaining('Cannot register cron job'),
     );
