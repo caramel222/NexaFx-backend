@@ -18,6 +18,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignupDto } from './dto/signup.dto';
 import { VerifySignupOtpDto } from './dto/verify-signup-otp.dto';
 import { VerifySignupResponseDto } from './dto/signup-response.dto';
+import { VerifyLoginOtpResponseDto } from './dto/signup-response.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Throttle } from '@nestjs/throttler';
 // import { ConfigService } from '@nestjs/config';
@@ -64,18 +65,8 @@ export class AuthController {
   @ApiResponse({
     status: 200,
     description:
-      'OTP verified. Either tokens are issued directly or a 2FA challenge is returned',
-    schema: {
-      type: 'object',
-      properties: {
-        requiresTwoFactor: { type: 'boolean' },
-        twoFactorToken: { type: 'string' },
-        message: { type: 'string' },
-        accessToken: { type: 'string' },
-        refreshToken: { type: 'string' },
-        expiresIn: { type: 'number' },
-      },
-    },
+      'OTP verified. Returns full auth tokens + user object (including name) when no 2FA is required, or a twoFactorToken challenge when 2FA is enabled.',
+    type: VerifyLoginOtpResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Invalid or expired OTP' })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
@@ -92,15 +83,8 @@ export class AuthController {
   @ApiBody({ type: VerifyTwoFactorDto })
   @ApiResponse({
     status: 200,
-    description: '2FA verified successfully, tokens issued',
-    schema: {
-      type: 'object',
-      properties: {
-        accessToken: { type: 'string' },
-        refreshToken: { type: 'string' },
-        expiresIn: { type: 'number' },
-      },
-    },
+    description: '2FA verified. Returns full auth tokens + user object (including name).',
+    type: VerifyLoginOtpResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -137,9 +121,21 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({
+    default: {
+      ttl: 60 * 1000,
+      limit: Number(process.env.THROTTLE_AUTH_LIMIT ?? 5),
+    },
+  })
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reset password using OTP' })
+  @ApiOperation({
+    summary: 'Reset password using OTP',
+    description:
+      'Completes the password-reset flow. Call POST /auth/forgot-password first ' +
+      'to receive a 6-digit OTP by email, then submit that OTP here together with ' +
+      'the registered email and the desired new password.',
+  })
   @ApiBody({ type: ResetPasswordDto })
   @ApiResponse({
     status: 200,
@@ -151,8 +147,33 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Invalid or expired OTP' })
-  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Validation failed — one or more fields are missing or invalid. ' +
+      'The response body contains an `errors` array with per-field messages.',
+    schema: {
+      type: 'object',
+      properties: {
+        success: { type: 'boolean', example: false },
+        statusCode: { type: 'number', example: 400 },
+        message: { type: 'string', example: 'Validation failed' },
+        errors: {
+          type: 'array',
+          items: { type: 'string' },
+          example: [
+            'email must be a valid email address',
+            'otp must be exactly 6 characters',
+            'newPassword must be at least 12 characters',
+          ],
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Invalid or expired OTP, or account not found',
+  })
   async resetPassword(@Body() resetDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetDto);
   }
