@@ -45,25 +45,16 @@ import { UsersModule } from './users/users.module';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        ...(process.env.NODE_ENV === 'test'
-          ? {
-              type: 'sqlite',
-              database: ':memory:',
-              synchronize: true,
-              autoLoadEntities: true,
-            }
-          : {
-              type: 'postgres',
-              url: configService.get<string>('DATABASE_URL'),
-              synchronize:
-                process.env.NODE_ENV !== 'production' &&
-                process.env.NODE_ENV !== 'staging',
-              ssl:
-                process.env.NODE_ENV === 'production'
-                  ? { rejectUnauthorized: false }
-                  : false,
-              autoLoadEntities: true,
-            }),
+        type: 'postgres',
+        url: configService.get<string>('DATABASE_URL'),
+        synchronize:
+          process.env.NODE_ENV !== 'production' &&
+          process.env.NODE_ENV !== 'staging',
+        ssl:
+          process.env.NODE_ENV === 'production'
+            ? { rejectUnauthorized: false }
+            : false,
+        autoLoadEntities: true,
       }),
       inject: [ConfigService],
     }),
