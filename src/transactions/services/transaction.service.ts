@@ -25,6 +25,7 @@ import {
   CreateWithdrawalDto,
   CreateSwapDto,
   TransactionQueryDto,
+  TagUsageDto,
 } from '../dtos/transaction.dto';
 import { NotificationsService } from '../../notifications/notifications.service';
 import { NotificationType } from '../../notifications/entities/notification.entity';
@@ -50,6 +51,17 @@ import { EncryptionService } from '../../common/services/encryption.service';
 import { LedgerService } from '../../ledger/services/ledger.service';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Truncates a memo string to at most 28 UTF-8 bytes, the Stellar memo_text limit.
+ * Splits on a character boundary so the result is always valid UTF-8.
+ */
+export function truncateMemoTo28Bytes(memo: string): string {
+  const encoded = Buffer.from(memo, 'utf8');
+  if (encoded.length <= 28) return memo;
+  // Slice to 28 bytes, then decode — incomplete multi-byte sequences are dropped
+  return encoded.slice(0, 28).toString('utf8').replace(/\uFFFD/g, '');
+}
 
 /** Narrows an unknown catch value to a plain Error with a message string. */
 function toError(err: unknown): Error {
@@ -212,6 +224,7 @@ export class TransactionsService {
       feeAmount: fee.feeAmount.toFixed(8),
       feeCurrency: fee.feeCurrency,
       status: TransactionStatus.PENDING,
+      counterpartyMemo: createDepositDto.memo ?? null,
     });
 
     try {
@@ -242,10 +255,15 @@ export class TransactionsService {
         amount: amount.toString(),
       });
 
+      // Use counterpartyMemo on Stellar if provided (truncated to 28 bytes)
+      const stellarMemo = createDepositDto.memo
+        ? truncateMemoTo28Bytes(createDepositDto.memo)
+        : `DEPOSIT-${transaction.id}`;
+
       const stellarTx = await this.stellarService.createTransaction({
         sourcePublicKey: sourceAddress,
         operations: [paymentOperation],
-        memo: `DEPOSIT-${transaction.id}`,
+        memo: stellarMemo,
       });
 
       const secretKey = await this.getStellarSecretKey();
@@ -426,6 +444,7 @@ export class TransactionsService {
       feeAmount: fee.feeAmount.toFixed(8),
       feeCurrency: fee.feeCurrency,
       status: TransactionStatus.PENDING,
+      counterpartyMemo: createWithdrawalDto.memo ?? null,
     });
 
     try {
@@ -457,10 +476,15 @@ export class TransactionsService {
         amount: amount.toString(),
       });
 
+      // Use counterpartyMemo on Stellar if provided (truncated to 28 bytes)
+      const stellarMemo = createWithdrawalDto.memo
+        ? truncateMemoTo28Bytes(createWithdrawalDto.memo)
+        : `WITHDRAW-${transaction.id}`;
+
       const stellarTx = await this.stellarService.createTransaction({
         sourcePublicKey: sourceAddress,
         operations: [paymentOperation],
-        memo: `WITHDRAW-${transaction.id}`,
+        memo: stellarMemo,
       });
 
       const secretKey = await this.getUserStellarSecretKey(
@@ -637,6 +661,7 @@ export class TransactionsService {
         feeAmount: fee.feeAmount.toFixed(8),
         feeCurrency: fee.feeCurrency,
         status: TransactionStatus.PENDING,
+        counterpartyMemo: createSwapDto.memo ?? null,
         metadata: {
           path: bestPath.path,
           originalDestinationAmount: destinationAmount,
@@ -682,10 +707,14 @@ export class TransactionsService {
           slippageTolerance,
         });
 
+        const swapMemo = createSwapDto.memo
+          ? truncateMemoTo28Bytes(createSwapDto.memo)
+          : `SWAP-${transaction.id}`;
+
         const stellarTx = await this.stellarService.createTransaction({
           sourcePublicKey: txWallet.publicKey,
           operations: [swapOperation],
-          memo: `SWAP-${transaction.id}`,
+          memo: swapMemo,
         });
 
         const secretKey = await this.getUserStellarSecretKey(userId, walletId);
@@ -1111,6 +1140,9 @@ export class TransactionsService {
     userId: string,
     query?: TransactionQueryDto,
   ): Promise<{ transactions: any[]; total: number }> {
+    const page = Math.max(1, query?.page ?? 1);
+    const limit = Math.max(1, query?.limit ?? 20);
+
     const queryBuilder = this.transactionRepository
       .createQueryBuilder('transaction')
       .where('transaction.userId = :userId', { userId });
@@ -1119,13 +1151,38 @@ export class TransactionsService {
       queryBuilder.andWhere('transaction.type = :type', { type: query.type });
     }
 
+    if (query?.status) {
+      queryBuilder.andWhere('transaction.status = :status', {
+        status: query.status,
+      });
+    }
+
     if (query?.currency) {
       queryBuilder.andWhere('transaction.currency = :currency', {
         currency: query.currency,
       });
     }
 
-    queryBuilder.orderBy('transaction.createdAt', 'DESC');
+    // Filter by tag — array contains (GIN-indexed)
+    if (query?.tag) {
+      queryBuilder.andWhere(':tag = ANY(transaction.tags)', {
+        tag: query.tag.toLowerCase(),
+      });
+    }
+
+    // Full-text search across userNote, counterpartyMemo, txHash
+    if (query?.search) {
+      const term = `%${query.search}%`;
+      queryBuilder.andWhere(
+        '(transaction.userNote ILIKE :term OR transaction.counterpartyMemo ILIKE :term OR transaction.txHash ILIKE :term)',
+        { term },
+      );
+    }
+
+    queryBuilder
+      .orderBy('transaction.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
 
     const [transactions, total] = await queryBuilder.getManyAndCount();
 
@@ -1206,6 +1263,64 @@ export class TransactionsService {
       where: { status: TransactionStatus.PENDING },
       order: { createdAt: 'ASC' },
     });
+  }
+
+  /**
+   * Update the private note on a transaction (owner only).
+   */
+  async updateNote(
+    transactionId: string,
+    userId: string,
+    note: string | null,
+  ): Promise<Transaction> {
+    const transaction = await this.transactionRepository.findOne({
+      where: { id: transactionId },
+    });
+    if (!transaction) throw new NotFoundException('Transaction not found');
+    if (transaction.userId !== userId)
+      throw new ForbiddenException(
+        'You do not have permission to annotate this transaction',
+      );
+    transaction.userNote = note;
+    return this.transactionRepository.save(transaction);
+  }
+
+  /**
+   * Replace the tag list on a transaction (owner only).
+   */
+  async updateTags(
+    transactionId: string,
+    userId: string,
+    tags: string[],
+  ): Promise<Transaction> {
+    const transaction = await this.transactionRepository.findOne({
+      where: { id: transactionId },
+    });
+    if (!transaction) throw new NotFoundException('Transaction not found');
+    if (transaction.userId !== userId)
+      throw new ForbiddenException(
+        'You do not have permission to annotate this transaction',
+      );
+    transaction.tags = tags;
+    return this.transactionRepository.save(transaction);
+  }
+
+  /**
+   * Return all unique tags used by the authenticated user with usage counts.
+   */
+  async getUserTags(userId: string): Promise<TagUsageDto[]> {
+    // Unnest the text[] array and count occurrences per tag
+    const rows = await this.transactionRepository
+      .createQueryBuilder('transaction')
+      .select('UNNEST(transaction.tags)', 'tag')
+      .addSelect('COUNT(*)', 'count')
+      .where('transaction.userId = :userId', { userId })
+      .andWhere('transaction.tags IS NOT NULL')
+      .groupBy('tag')
+      .orderBy('count', 'DESC')
+      .getRawMany<{ tag: string; count: string }>();
+
+    return rows.map((r) => ({ tag: r.tag, count: parseInt(r.count, 10) }));
   }
 
   // ── Private helpers ─────────────────────────────────────────────────────────

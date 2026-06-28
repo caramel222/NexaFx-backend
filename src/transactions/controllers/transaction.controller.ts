@@ -3,11 +3,14 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
   Request,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,6 +27,9 @@ import {
   CreateWithdrawalDto,
   CreateSwapDto,
   TransactionQueryDto,
+  UpdateNoteDto,
+  UpdateTagsDto,
+  TagUsageDto,
 } from '../dtos/transaction.dto';
 import {
   TransactionResponseDto,
@@ -174,6 +180,17 @@ export class TransactionsController {
     );
   }
 
+  @Get('tags')
+  @ApiOperation({ summary: 'Get all unique tags used by the authenticated user with usage count' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of tags and their usage counts',
+    type: [TagUsageDto],
+  })
+  async getUserTags(@Request() req): Promise<TagUsageDto[]> {
+    return this.transactionsService.getUserTags(req.user.userId);
+  }
+
   @Get()
   @ApiOperation({ summary: 'Get all transactions for the authenticated user' })
   @ApiResponse({
@@ -233,6 +250,63 @@ export class TransactionsController {
     @Request() req,
   ): Promise<TransactionResponseDto> {
     return this.transactionsService.findOne(id, req.user.userId);
+  }
+
+  @Patch(':id/note')
+  @ApiOperation({ summary: 'Add or update a private note on a transaction (owner only)' })
+  @ApiParam({ name: 'id', description: 'Transaction UUID' })
+  @ApiBody({ type: UpdateNoteDto })
+  @ApiResponse({ status: 200, description: 'Note updated', type: TransactionResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the transaction owner' })
+  @ApiResponse({ status: 404, description: 'Transaction not found' })
+  async updateNote(
+    @Param('id') id: string,
+    @Body() body: UpdateNoteDto,
+    @Request() req,
+  ): Promise<TransactionResponseDto> {
+    return this.transactionsService.updateNote(
+      id,
+      req.user.userId,
+      body.note ?? null,
+    ) as unknown as TransactionResponseDto;
+  }
+
+  @Delete(':id/note')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Clear the private note on a transaction (owner only)' })
+  @ApiParam({ name: 'id', description: 'Transaction UUID' })
+  @ApiResponse({ status: 200, description: 'Note cleared', type: TransactionResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the transaction owner' })
+  @ApiResponse({ status: 404, description: 'Transaction not found' })
+  async deleteNote(
+    @Param('id') id: string,
+    @Request() req,
+  ): Promise<TransactionResponseDto> {
+    return this.transactionsService.updateNote(
+      id,
+      req.user.userId,
+      null,
+    ) as unknown as TransactionResponseDto;
+  }
+
+  @Patch(':id/tags')
+  @ApiOperation({ summary: 'Replace the tag list on a transaction (owner only)' })
+  @ApiParam({ name: 'id', description: 'Transaction UUID' })
+  @ApiBody({ type: UpdateTagsDto })
+  @ApiResponse({ status: 200, description: 'Tags updated', type: TransactionResponseDto })
+  @ApiResponse({ status: 400, description: 'More than 10 tags or a tag exceeds 30 chars' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the transaction owner' })
+  @ApiResponse({ status: 404, description: 'Transaction not found' })
+  async updateTags(
+    @Param('id') id: string,
+    @Body() body: UpdateTagsDto,
+    @Request() req,
+  ): Promise<TransactionResponseDto> {
+    return this.transactionsService.updateTags(
+      id,
+      req.user.userId,
+      body.tags,
+    ) as unknown as TransactionResponseDto;
   }
 
   @Patch(':id/cancel')

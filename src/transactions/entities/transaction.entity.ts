@@ -27,6 +27,8 @@ export enum TransactionStatus {
 @Index(['status', 'createdAt'])
 // Optimizes user transaction list filtering by status.
 @Index(['userId', 'status'])
+// Optimizes counterpartyMemo ILIKE search.
+@Index(['counterpartyMemo'])
 @Entity('transactions')
 export class Transaction {
   @PrimaryGeneratedColumn('uuid')
@@ -93,4 +95,25 @@ export class Transaction {
 
   @Column({ type: 'jsonb', nullable: true })
   metadata: any;
+
+  /**
+   * Private note written by the transaction owner.
+   * NEVER returned in counterparty-facing responses.
+   */
+  @Column({ type: 'text', nullable: true })
+  userNote: string | null;
+
+  /**
+   * Shared memo visible to both parties. Also written to the Stellar
+   * transaction memo field (truncated to 28 bytes if needed).
+   */
+  @Column({ type: 'varchar', length: 200, nullable: true })
+  counterpartyMemo: string | null;
+
+  /**
+   * User-defined tags for grouping and filtering.
+   * Stored as a PostgreSQL text array. GIN-indexed for efficient array queries.
+   */
+  @Column({ type: 'text', array: true, nullable: true, default: null })
+  tags: string[] | null;
 }

@@ -492,6 +492,9 @@ If you have any questions about this transaction, please contact our support tea
         status: tx.status,
         txHash: tx.txHash,
         fee: tx.feeAmount,
+        counterpartyMemo: tx.counterpartyMemo ?? '',
+        userNote: tx.userNote ?? '',
+        tags: (tx.tags ?? []).join(', '),
         createdAt: tx.createdAt.toISOString(),
       });
     });
@@ -538,6 +541,9 @@ If you have any questions about this transaction, please contact our support tea
       { header: 'Status', key: 'status', width: 12 },
       { header: 'TxHash', key: 'txHash', width: 44 },
       { header: 'Fee', key: 'fee', width: 10 },
+      { header: 'Counterparty Memo', key: 'counterpartyMemo', width: 30 },
+      { header: 'Note (Private)', key: 'userNote', width: 30 },
+      { header: 'Tags', key: 'tags', width: 20 },
       { header: 'Created At', key: 'createdAt', width: 24 },
     ];
     transactions.forEach((tx) => {
@@ -550,6 +556,9 @@ If you have any questions about this transaction, please contact our support tea
         status: tx.status,
         txHash: tx.txHash,
         fee: tx.feeAmount,
+        counterpartyMemo: tx.counterpartyMemo ?? '',
+        userNote: tx.userNote ?? '',
+        tags: (tx.tags ?? []).join(', '),
         createdAt: tx.createdAt.toISOString(),
       });
     });
