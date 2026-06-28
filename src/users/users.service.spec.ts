@@ -3,10 +3,11 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ThrottlerStorageService } from '@nestjs/throttler';
 import { UsersService } from './users.service';
-import { User, UserRole, UserPlan } from './user.entity';
+import { User, UserRole, UserPlan, UserKycTier } from './user.entity';
 import { RateLimitConfig } from './rate-limit-config.entity';
 import { StellarService } from '../blockchain/stellar/stellar.service';
 import { ExchangeRatesService } from '../exchange-rates/exchange-rates.service';
+import { NotificationPreferenceService } from '../notifications/services/notification-preference.service';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -26,6 +27,7 @@ describe('UsersService', () => {
     referralCode: 'ABC12345',
     referredBy: null,
     isVerified: true,
+    kycTier: UserKycTier.ENHANCED,
     isSuspended: false,
     isTwoFactorEnabled: false,
     role: UserRole.USER,
@@ -36,7 +38,7 @@ describe('UsersService', () => {
     lockedUntil: null,
     createdAt: new Date('2025-01-01T00:00:00Z'),
     updatedAt: new Date('2025-03-27T10:30:00Z'),
-    password: 'hashed-password',
+    password: process.env.TEST_USER_PASSWORD ?? 'hashed-password',
     kycRecords: [],
     notifications: [],
   };
@@ -80,6 +82,12 @@ describe('UsersService', () => {
             getRecord: jest.fn(),
             addRecord: jest.fn(),
             increment: jest.fn(),
+          },
+        },
+        {
+          provide: NotificationPreferenceService,
+          useValue: {
+            createDefaults: jest.fn(),
           },
         },
       ],

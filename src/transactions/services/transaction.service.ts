@@ -49,6 +49,7 @@ import { WebhookService } from '../../webhooks/services/webhook.service';
 import { WalletsService } from '../../wallets/wallets.service';
 import { EncryptionService } from '../../common/services/encryption.service';
 import { LedgerService } from '../../ledger/services/ledger.service';
+import { TransactionLimitService } from './transaction-limit.service';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -170,6 +171,7 @@ export class TransactionsService {
     private readonly walletsService: WalletsService,
     private readonly encryptionService: EncryptionService,
     private readonly ledgerService: LedgerService,
+    private readonly transactionLimitService: TransactionLimitService,
   ) {}
 
   /**
@@ -186,6 +188,8 @@ export class TransactionsService {
     this.logger.log(
       `Creating deposit for user ${userId}: ${amount} ${currency}`,
     );
+
+    await this.transactionLimitService.check(userId, amount, currency);
 
     const currencyData = await this.currenciesService.findOne(currency);
     if (!currencyData || !currencyData.isActive) {
@@ -382,6 +386,8 @@ export class TransactionsService {
       throw new NotFoundException('User not found');
     }
 
+    await this.transactionLimitService.check(userId, amount, currency);
+
     const userBalance = await this.getUserBalance(userId, currency);
     if (parseFloat(userBalance) < amount) {
       await this.auditLogsService.logTransactionEvent(
@@ -572,6 +578,8 @@ export class TransactionsService {
     this.logger.log(
       `Creating swap for user ${userId}: ${amount} ${fromCurrency} to ${toCurrency}`,
     );
+
+    await this.transactionLimitService.check(userId, amount, fromCurrency);
 
     if (fromCurrency === toCurrency) {
       throw new BadRequestException(

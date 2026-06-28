@@ -30,6 +30,7 @@ import { BeneficiariesService } from '../../beneficiaries/beneficiaries.service'
 import { WalletsService } from '../../wallets/wallets.service';
 import { EncryptionService } from '../../common/services/encryption.service';
 import { LedgerService } from '../../ledger/services/ledger.service';
+import { TransactionLimitService } from './transaction-limit.service';
 
 describe('TransactionsService fee integration behavior', () => {
   let service: TransactionsService;
@@ -136,6 +137,9 @@ describe('TransactionsService fee integration behavior', () => {
   const ledgerService = {
     record: jest.fn(async () => undefined),
   };
+  const transactionLimitService = {
+    check: jest.fn(async () => undefined),
+  };
   const queryRunner = {
     connect: jest.fn(async () => undefined),
     startTransaction: jest.fn(async () => undefined),
@@ -177,6 +181,7 @@ describe('TransactionsService fee integration behavior', () => {
         { provide: WalletsService, useValue: walletsService },
         { provide: EncryptionService, useValue: encryptionService },
         { provide: LedgerService, useValue: ledgerService },
+        { provide: TransactionLimitService, useValue: transactionLimitService },
       ],
     }).compile();
 
@@ -227,6 +232,24 @@ describe('TransactionsService fee integration behavior', () => {
         feeCurrency: 'XLM',
       }),
       expect.anything(),
+    );
+  });
+
+  it('throws BadRequestException when neither destinationAddress nor beneficiaryId is provided', async () => {
+    await expect(
+      service.createWithdrawal('user-1', {
+        amount: 100,
+        currency: 'XLM',
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    await expect(
+      service.createWithdrawal('user-1', {
+        amount: 100,
+        currency: 'XLM',
+      }),
+    ).rejects.toThrow(
+      'Either destinationAddress or a valid beneficiaryId must be provided.',
     );
   });
 

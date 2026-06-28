@@ -17,6 +17,20 @@ import {
   TransactionType,
 } from '../entities/transaction.entity';
 
+/**
+ * Payload for POST /transactions/deposit.
+ *
+ * **Frontend contract** (lib/api/transactions.ts):
+ * All three fields below must be sent. `sourceAddress` is the user’s Stellar
+ * public key — read it from `GET /users/profile` → `walletAddress`. Omitting
+ * it will cause the backend to return a 400 with the message
+ * "sourceAddress should not be empty".
+ *
+ * Example request body:
+ * ```json
+ * { "amount": 100.5, "currency": "XLM", "sourceAddress": "GDQP2K..." }
+ * ```
+ */
 export class CreateDepositDto {
   @ApiProperty({ example: 100.5, description: 'Amount to deposit', minimum: 0.01 })
   @IsNumber()
@@ -29,15 +43,26 @@ export class CreateDepositDto {
   @IsNotEmpty()
   currency: string;
 
+  /**
+   * The user’s Stellar public key (G…).
+   * **Required.** Obtain from `GET /users/profile` → `walletAddress`.
+   * The backend uses this as the transaction source account on the Stellar
+   * network; the request will be rejected with 400 if this field is absent.
+   */
   @ApiProperty({
     example: 'GDQP2KPQGKIHYJGXNUIYOMHARUARCA7DJT5FO2FFOOUJ3UHMNGUAO7UP',
-    description: 'Stellar source address for the deposit',
+    description:
+      'User’s Stellar public key (G…). Required. Read from GET /users/profile → walletAddress.',
   })
   @IsString()
   @IsNotEmpty()
   sourceAddress: string;
 
   @ApiPropertyOptional({ description: 'Optional wallet to credit (UUID). Defaults to primary wallet.', format: 'uuid' })
+  @ApiPropertyOptional({
+    description:
+      'Optional wallet to credit. When omitted, the user’s default wallet is used.',
+  })
   @IsOptional()
   @IsUUID()
   walletId?: string;
@@ -53,6 +78,30 @@ export class CreateDepositDto {
   memo?: string;
 }
 
+/**
+ * Payload for POST /transactions/withdraw.
+ *
+ * **Frontend contract** (lib/api/transactions.ts):
+ * You must provide EITHER `destinationAddress` OR `beneficiaryId`.
+ * - `destinationAddress`: The recipient's Stellar public key (G...) or fiat destination.
+ *   Use this for one-time withdrawals to an address not saved as a beneficiary.
+ * - `beneficiaryId`: UUID of a saved beneficiary. The backend will use the
+ *   beneficiary's `walletAddress` as the destination and update `lastUsedAt` on success.
+ *
+ * If both are provided, `beneficiaryId` takes precedence.
+ * If neither is provided, the request will be rejected with a 400 error:
+ * "Either destinationAddress or a valid beneficiaryId must be provided."
+ *
+ * Example request body (with destinationAddress):
+ * ```json
+ * { "amount": 50.25, "currency": "XLM", "destinationAddress": "GDQP2K..." }
+ * ```
+ *
+ * Example request body (with beneficiaryId):
+ * ```json
+ * { "amount": 50.25, "currency": "XLM", "beneficiaryId": "a1b2c3d4-..." }
+ * ```
+ */
 export class CreateWithdrawalDto {
   @ApiProperty({ example: 50.25, description: 'Amount to withdraw', minimum: 0.01 })
   @IsNumber()
@@ -68,6 +117,10 @@ export class CreateWithdrawalDto {
   @ApiPropertyOptional({
     example: 'GDQP2KPQGKIHYJGXNUIYOMHARUARCA7DJT5FO2FFOOUJ3UHMNGUAO7UP',
     description: 'Stellar destination address. Optional when beneficiaryId is provided — if both are given, beneficiaryId takes precedence.',
+    description:
+      "The recipient's Stellar public key (G...) or fiat destination address. " +
+      'Optional when beneficiaryId is provided - if both are given, beneficiaryId takes precedence. ' +
+      'At least one of destinationAddress or beneficiaryId must be provided.',
   })
   @IsString()
   @IsOptional()
@@ -75,6 +128,10 @@ export class CreateWithdrawalDto {
 
   @ApiPropertyOptional({
     description: "ID of a saved beneficiary. If provided, the beneficiary's walletAddress is used as the destination and lastUsedAt is updated on success.",
+    description:
+      "ID of a saved beneficiary. If provided, the beneficiary's walletAddress " +
+      'is used as the destination and lastUsedAt is updated on success. ' +
+      'At least one of destinationAddress or beneficiaryId must be provided.',
     example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   })
   @IsUUID()
@@ -82,6 +139,10 @@ export class CreateWithdrawalDto {
   beneficiaryId?: string;
 
   @ApiPropertyOptional({ description: 'Optional wallet to withdraw from (UUID). Defaults to primary wallet.', format: 'uuid' })
+  @ApiPropertyOptional({
+    description:
+      'Optional wallet to withdraw from. When omitted, the user’s default wallet is used.',
+  })
   @IsOptional()
   @IsUUID()
   walletId?: string;
@@ -179,6 +240,11 @@ export class CreateSwapDto {
   sourceAddress: string;
 
   @ApiPropertyOptional({ description: 'Optional wallet to use for the swap (UUID). sourceAddress must match the wallet public key.', format: 'uuid' })
+  @ApiPropertyOptional({
+    description:
+      'Optional wallet to use for the swap. When omitted, the user’s default wallet is used. ' +
+      'sourceAddress must match the selected wallet’s public key.',
+  })
   @IsOptional()
   @IsUUID()
   walletId?: string;
